@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Christmas Pattern Generator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="controls">
+            <div class="controls-left">
+                <h1>Christmas Pattern Generator</h1>
+                <div style="margin-bottom: 20px;">
+                    <button id="record-video">화면 녹화</button>
+                </div>
+                <div class="audio-controls">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
+                        <h2 style="margin: 0;">전체 제어</h2>
+                        <button id="play-pause-all">▶</button>
+                    </div>
+                    <div class="progress-container" style="margin-top: 10px;">
+                        <div class="progress-bar" id="progress-all">
+                            <div class="progress-fill" id="progress-fill-all"></div>
+                        </div>
+                        <div class="time-display" id="time-all">0:00 / 0:00</div>
+                    </div>
+                </div>
+                <div class="layer-controls">
+                    <h2>레이어 제어</h2>
+                    <div class="layer-toggle">
+                        <div class="layer-item">
+                            <div class="layer-header">
+                                <label class="layer-checkbox">
+                                    <input type="checkbox" id="layer-white-rect" checked>
+                                    <span>Horizontal □</span>
+                                </label>
+                                <input type="color" id="color-white-rect" value="#ffffff" class="color-picker">
+                            </div>
+                            <input type="file" id="audio-white-rect" accept="audio/*" class="audio-file-input" style="display: none;">
+                            <button class="load-audio-btn" data-layer="whiteRect">Select Music</button>
+                            <div class="audio-file-name" id="audio-name-white-rect"></div>
+                            <div class="progress-container-layer" data-layer="whiteRect" style="display: none; margin-top: 6px;">
+                                <div class="progress-bar-layer" data-layer="whiteRect">
+                                    <div class="progress-fill-layer" data-layer="whiteRect"></div>
+                                </div>
+                                <div class="time-display-layer" data-layer="whiteRect">0:00 / 0:00</div>
+                            </div>
+                        </div>
+                        <div class="layer-item">
+                            <div class="layer-header">
+                                <label class="layer-checkbox">
+                                    <input type="checkbox" id="layer-green-rect" checked>
+                                    <span>Vertical □</span>
+                                </label>
+                                <input type="color" id="color-green-rect" value="#00ff00" class="color-picker">
+                            </div>
+                            <input type="file" id="audio-green-rect" accept="audio/*" class="audio-file-input" style="display: none;">
+                            <button class="load-audio-btn" data-layer="greenRect">Select Music</button>
+                            <div class="audio-file-name" id="audio-name-green-rect"></div>
+                            <div class="progress-container-layer" data-layer="greenRect" style="display: none; margin-top: 6px;">
+                                <div class="progress-bar-layer" data-layer="greenRect">
+                                    <div class="progress-fill-layer" data-layer="greenRect"></div>
+                                </div>
+                                <div class="time-display-layer" data-layer="greenRect">0:00 / 0:00</div>
+                            </div>
+                        </div>
+                        <div class="layer-item">
+                            <div class="layer-header">
+                                <label class="layer-checkbox">
+                                    <input type="checkbox" id="layer-horizontal" checked>
+                                    <span>Horizontal dash (—)</span>
+                                </label>
+                                <input type="color" id="color-horizontal" value="#ffffff" class="color-picker">
+                            </div>
+                            <input type="file" id="audio-horizontal" accept="audio/*" class="audio-file-input" style="display: none;">
+                            <button class="load-audio-btn" data-layer="horizontal">Select Music</button>
+                            <div class="audio-file-name" id="audio-name-horizontal"></div>
+                            <div class="progress-container-layer" data-layer="horizontal" style="display: none; margin-top: 6px;">
+                                <div class="progress-bar-layer" data-layer="horizontal">
+                                    <div class="progress-fill-layer" data-layer="horizontal"></div>
+                                </div>
+                                <div class="time-display-layer" data-layer="horizontal">0:00 / 0:00</div>
+                            </div>
+                        </div>
+                        <div class="layer-item">
+                            <div class="layer-header">
+                                <label class="layer-checkbox">
+                                    <input type="checkbox" id="layer-vertical" checked>
+                                    <span>Vertical dash (|)</span>
+                                </label>
+                                <input type="color" id="color-vertical" value="#ffffff" class="color-picker">
+                            </div>
+                            <input type="file" id="audio-vertical" accept="audio/*" class="audio-file-input" style="display: none;">
+                            <button class="load-audio-btn" data-layer="vertical">Select Music</button>
+                            <div class="audio-file-name" id="audio-name-vertical"></div>
+                            <div class="progress-container-layer" data-layer="vertical" style="display: none; margin-top: 6px;">
+                                <div class="progress-bar-layer" data-layer="vertical">
+                                    <div class="progress-fill-layer" data-layer="vertical"></div>
+                                </div>
+                                <div class="time-display-layer" data-layer="vertical">0:00 / 0:00</div>
+                            </div>
+                        </div>
+                        <div class="layer-item">
+                            <div class="layer-header">
+                                <label class="layer-checkbox">
+                                    <input type="checkbox" id="layer-dot" checked>
+                                    <span>Dot(.)</span>
+                                </label>
+                                <input type="color" id="color-dot" value="#ff0000" class="color-picker">
+                            </div>
+                            <input type="file" id="audio-dot" accept="audio/*" class="audio-file-input" style="display: none;">
+                            <button class="load-audio-btn" data-layer="dot">Select Music</button>
+                            <div class="audio-file-name" id="audio-name-dot"></div>
+                            <div class="progress-container-layer" data-layer="dot" style="display: none; margin-top: 6px;">
+                                <div class="progress-bar-layer" data-layer="dot">
+                                    <div class="progress-fill-layer" data-layer="dot"></div>
+                                </div>
+                                <div class="time-display-layer" data-layer="dot">0:00 / 0:00</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="controls-right">
+                <div class="grid-controls">
+                    <button id="erase-mode">Clear Selection</button>
+                    <button id="clear-all">Clear All</button>
+                    <button id="save-pattern">Save Pattern</button>
+                    <input type="file" id="load-pattern" accept=".json" style="display: none;">
+                    <button id="load-pattern-btn">Import Pattern</button>
+                </div>
+            </div>
+        </div>
+        <div class="canvas-container">
+            <canvas id="pattern-canvas"></canvas>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
+
