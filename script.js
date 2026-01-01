@@ -537,105 +537,123 @@ function draw() {
             const cellX = x * CELL_SIZE;
             const cellY = y * CELL_SIZE;
             
-            // 흰색 직사각형 - 가로로 길어짐, 각 셀별 확장 그리드 사용
+            // 흰색 직사각형 - 대각선으로 길어짐 (왼쪽 위 → 오른쪽 아래), 각 셀별 확장 그리드 사용
             if (layerVisibility.whiteRect && cell.whiteRect) {
                 const animValue = getAnimationValue(x, y, 'whiteRect');
                 ctx.strokeStyle = layerColors.whiteRect;
                 ctx.lineWidth = 2;
                 
-                // 기본 사이즈: 1px 가로에서 시작
+                // 기본 사이즈: 1px 대각선에서 시작
                 const baseHeight = CELL_SIZE * 0.25; // 세로는 절반 크기
                 const baseWidth = 1; // 1px 가로에서 시작
                 const maxWidth = CELL_SIZE * (cell.whiteRectMaxGrid || 4); // 셀별 확장 그리드 사용
                 
-                // 애니메이션에 따라 가로 길이 변화
+                // 애니메이션에 따라 대각선 길이 변화
                 const rectWidth = baseWidth + (maxWidth - baseWidth) * animValue;
                 const rectHeight = baseHeight;
                 
                 const centerX = cellX + CELL_SIZE / 2;
                 const centerY = cellY + CELL_SIZE / 2;
                 
+                // 대각선으로 회전된 사각형 그리기 (45도 회전)
+                ctx.save();
+                ctx.translate(centerX, centerY);
+                ctx.rotate(Math.PI / 4); // 45도 회전
                 ctx.strokeRect(
-                    centerX - rectWidth / 2,
-                    centerY - rectHeight / 2,
+                    -rectWidth / 2,
+                    -rectHeight / 2,
                     rectWidth,
                     rectHeight
                 );
+                ctx.restore();
             }
             
-            // 녹색 직사각형 - 세로로 길어짐, 각 셀별 확장 그리드 사용
+            // 녹색 직사각형 - 대각선으로 길어짐 (오른쪽 위 → 왼쪽 아래), 각 셀별 확장 그리드 사용
             if (layerVisibility.greenRect && cell.greenRect) {
                 const animValue = getAnimationValue(x, y, 'greenRect');
                 ctx.strokeStyle = layerColors.greenRect;
                 ctx.lineWidth = 2;
                 
-                // 기본 사이즈: 1px 세로에서 시작
-                const baseWidth = CELL_SIZE * 0.25; // 가로는 절반 크기
-                const baseHeight = 1; // 1px 세로에서 시작
-                const maxHeight = CELL_SIZE * (cell.greenRectMaxGrid || 4); // 셀별 확장 그리드 사용
+                // 기본 사이즈: 1px 대각선에서 시작
+                // 오른쪽 위 → 왼쪽 아래 대각선이므로 가로로 길어지도록 설정
+                const baseHeight = CELL_SIZE * 0.25; // 세로는 절반 크기
+                const baseWidth = 1; // 1px 가로에서 시작
+                const maxWidth = CELL_SIZE * (cell.greenRectMaxGrid || 4); // 셀별 확장 그리드 사용
                 
-                // 애니메이션에 따라 세로 길이 변화
-                const rectWidth = baseWidth;
-                const rectHeight = baseHeight + (maxHeight - baseHeight) * animValue;
+                // 애니메이션에 따라 대각선 길이 변화 (가로로 길어짐)
+                const rectWidth = baseWidth + (maxWidth - baseWidth) * animValue;
+                const rectHeight = baseHeight;
                 
                 const centerX = cellX + CELL_SIZE / 2;
                 const centerY = cellY + CELL_SIZE / 2;
                 
+                // 대각선으로 회전된 사각형 그리기 (-45도 회전, 오른쪽 위 → 왼쪽 아래)
+                // whiteRect와 대칭되도록 -45도 회전
+                ctx.save();
+                ctx.translate(centerX, centerY);
+                ctx.rotate(-Math.PI / 4); // -45도 회전 (오른쪽 위 → 왼쪽 아래)
                 ctx.strokeRect(
-                    centerX - rectWidth / 2,
-                    centerY - rectHeight / 2,
+                    -rectWidth / 2,
+                    -rectHeight / 2,
                     rectWidth,
                     rectHeight
                 );
+                ctx.restore();
             }
             
-            // 가로 대시 (-) - 1px에서 시작해서 최대 0.5칸까지 확장
+            // 대각선 대시 (왼쪽 위 → 오른쪽 아래) - 1px에서 시작해서 최대 0.5칸까지 확장
             if (layerVisibility.horizontal && cell.horizontal) {
                 ctx.strokeStyle = layerColors.horizontal;
                 ctx.lineWidth = 2;
                 const baseLength = 1; // 1px에서 시작
-                const maxLength = CELL_SIZE * 0.5; // 최대 그리드 0.5개
+                const maxLength = CELL_SIZE * 0.7; // 대각선이므로 약간 더 길게
                 
                 let dashLength;
                 if (cell.horizontalFixed) {
-                    // Fixed: 고정 길이 (0.5칸, 모션 없음)
-                    dashLength = maxLength;
+                    // Fixed: 고정 길이 (0.25칸, 모션 없음) - 절반 길이
+                    dashLength = CELL_SIZE * 0.25;
                 } else {
                     // 0.5x: 애니메이션으로 길이 변화 (1px에서 0.5칸까지)
                     const animValue = getAnimationValue(x, y, 'horizontal');
                     dashLength = baseLength + (maxLength - baseLength) * animValue;
                 }
                 
-                const dashX = cellX + (CELL_SIZE - dashLength) / 2;
-                const dashY = cellY + CELL_SIZE / 2;
+                const centerX = cellX + CELL_SIZE / 2;
+                const centerY = cellY + CELL_SIZE / 2;
+                // 대각선 길이를 x, y 성분으로 변환 (45도 각도)
+                const halfLength = dashLength / Math.sqrt(2);
                 ctx.beginPath();
-                ctx.moveTo(dashX, dashY);
-                ctx.lineTo(dashX + dashLength, dashY);
+                // 왼쪽 위 → 오른쪽 아래 대각선
+                ctx.moveTo(centerX - halfLength, centerY - halfLength);
+                ctx.lineTo(centerX + halfLength, centerY + halfLength);
                 ctx.stroke();
             }
             
-            // 세로 대시 (|) - 1px에서 시작해서 최대 0.5칸까지 확장
+            // 대각선 대시 (오른쪽 위 → 왼쪽 아래) - 1px에서 시작해서 최대 0.5칸까지 확장
             if (layerVisibility.vertical && cell.vertical) {
                 ctx.strokeStyle = layerColors.vertical;
                 ctx.lineWidth = 2;
                 const baseLength = 1; // 1px에서 시작
-                const maxLength = CELL_SIZE * 0.5; // 최대 그리드 0.5개
+                const maxLength = CELL_SIZE * 0.7; // 대각선이므로 약간 더 길게
                 
                 let dashLength;
                 if (cell.verticalFixed) {
-                    // Fixed: 고정 길이 (0.5칸, 모션 없음)
-                    dashLength = maxLength;
+                    // Fixed: 고정 길이 (0.25칸, 모션 없음) - 절반 길이
+                    dashLength = CELL_SIZE * 0.25;
                 } else {
                     // 0.5x: 애니메이션으로 길이 변화 (1px에서 0.5칸까지)
                     const animValue = getAnimationValue(x, y, 'vertical');
                     dashLength = baseLength + (maxLength - baseLength) * animValue;
                 }
                 
-                const dashX = cellX + CELL_SIZE / 2;
-                const dashY = cellY + (CELL_SIZE - dashLength) / 2;
+                const centerX = cellX + CELL_SIZE / 2;
+                const centerY = cellY + CELL_SIZE / 2;
+                // 대각선 길이를 x, y 성분으로 변환 (45도 각도)
+                const halfLength = dashLength / Math.sqrt(2);
                 ctx.beginPath();
-                ctx.moveTo(dashX, dashY);
-                ctx.lineTo(dashX, dashY + dashLength);
+                // 오른쪽 위 → 왼쪽 아래 대각선
+                ctx.moveTo(centerX + halfLength, centerY - halfLength);
+                ctx.lineTo(centerX - halfLength, centerY + halfLength);
                 ctx.stroke();
             }
             
@@ -1272,9 +1290,23 @@ function initializeFixedPatterns() {
         const centerX = blockStartX + Math.floor(BLOCK_SIZE / 2); // 블록 중앙 (예: 2)
         const centerY = blockStartY + Math.floor(BLOCK_SIZE / 2); // 블록 중앙 (예: 2)
         
-        // 중앙 녹색 플러스 (중앙 셀)
-        grid[centerY][centerX].horizontal = true;
-        grid[centerY][centerX].vertical = true;
+        // 중앙 대각선 (X 형태) - 왼쪽 위에서 오른쪽 아래, 오른쪽 위에서 왼쪽 아래
+        // 왼쪽 위 → 오른쪽 아래 대각선
+        for (let i = -1; i <= 1; i++) {
+            const px = centerX + i;
+            const py = centerY + i;
+            if (px >= 0 && px < GRID_SIZE && py >= 0 && py < GRID_SIZE) {
+                grid[py][px].horizontal = true; // 대각선을 horizontal로 표시
+            }
+        }
+        // 오른쪽 위 → 왼쪽 아래 대각선
+        for (let i = -1; i <= 1; i++) {
+            const px = centerX + i;
+            const py = centerY - i;
+            if (px >= 0 && px < GRID_SIZE && py >= 0 && py < GRID_SIZE) {
+                grid[py][px].vertical = true; // 대각선을 vertical로 표시
+            }
+        }
         
         // 플러스 주변 3x3의 모서리 4개: 빨간 점들
         const innerDots = [
@@ -1340,9 +1372,23 @@ function initializeFixedPatterns() {
         const centerX = blockStartX + Math.floor(BLOCK_SIZE / 2);
         const centerY = blockStartY + Math.floor(BLOCK_SIZE / 2);
         
-        // 중앙 녹색 플러스
-        grid[centerY][centerX].horizontal = true;
-        grid[centerY][centerX].vertical = true;
+        // 중앙 대각선 (X 형태) - 왼쪽 위에서 오른쪽 아래, 오른쪽 위에서 왼쪽 아래
+        // 왼쪽 위 → 오른쪽 아래 대각선
+        for (let i = -1; i <= 1; i++) {
+            const px = centerX + i;
+            const py = centerY + i;
+            if (px >= 0 && px < GRID_SIZE && py >= 0 && py < GRID_SIZE) {
+                grid[py][px].horizontal = true; // 대각선을 horizontal로 표시
+            }
+        }
+        // 오른쪽 위 → 왼쪽 아래 대각선
+        for (let i = -1; i <= 1; i++) {
+            const px = centerX + i;
+            const py = centerY - i;
+            if (px >= 0 && px < GRID_SIZE && py >= 0 && py < GRID_SIZE) {
+                grid[py][px].vertical = true; // 대각선을 vertical로 표시
+            }
+        }
         
         // 플러스 주변 3x3의 모서리 4개: 빨간 점들
         const innerDots = [
@@ -1409,60 +1455,60 @@ function initializeFixedPatterns() {
         });
     });
     
-    // 셀 사이 간격 패턴 (가로 연결)
-    // 패턴: 흰색 가로 직사각형 - 빨간 점 - 흰색 가로 대시 - 빨간 점
+    // 셀 사이 간격 패턴 (대각선 연결 - 왼쪽 위에서 오른쪽 아래)
+    // 패턴: 흰색 직사각형 - 빨간 점 - 대각선 대시 - 빨간 점
     for (let by = 0; by < 3; by++) {
         for (let bx = 0; bx < 2; bx++) {
             const gapX = (bx + 1) * BLOCK_SIZE - 1; // 블록 사이 경계
             const centerY = by * BLOCK_SIZE + Math.floor(BLOCK_SIZE / 2);
             
-            // 흰색 가로 직사각형 (블록 경계 바로 옆)
+            // 흰색 직사각형 (블록 경계 바로 옆, 대각선 시작점)
             if (gapX + 1 < GRID_SIZE && centerY >= 0 && centerY < GRID_SIZE) {
                 grid[centerY][gapX + 1].whiteRect = true;
             }
             
             // 첫 번째 빨간 점
-            if (gapX + 2 < GRID_SIZE && centerY >= 0 && centerY < GRID_SIZE) {
-                grid[centerY][gapX + 2].dot = true;
+            if (gapX + 2 < GRID_SIZE && centerY + 1 >= 0 && centerY + 1 < GRID_SIZE) {
+                grid[centerY + 1][gapX + 2].dot = true;
             }
             
-            // 흰색 가로 대시
-            if (gapX + 3 < GRID_SIZE && centerY >= 0 && centerY < GRID_SIZE) {
-                grid[centerY][gapX + 3].horizontal = true;
+            // 대각선 대시 (왼쪽 위 → 오른쪽 아래)
+            if (gapX + 3 < GRID_SIZE && centerY + 2 >= 0 && centerY + 2 < GRID_SIZE) {
+                grid[centerY + 2][gapX + 3].horizontal = true;
             }
             
             // 두 번째 빨간 점
-            if (gapX + 4 < GRID_SIZE && centerY >= 0 && centerY < GRID_SIZE) {
-                grid[centerY][gapX + 4].dot = true;
+            if (gapX + 4 < GRID_SIZE && centerY + 3 >= 0 && centerY + 3 < GRID_SIZE) {
+                grid[centerY + 3][gapX + 4].dot = true;
             }
         }
     }
     
-    // 셀 사이 간격 패턴 (세로 연결)
-    // 패턴: 흰색 세로 직사각형 - 빨간 점 - 흰색 세로 대시 - 빨간 점
+    // 셀 사이 간격 패턴 (대각선 연결 - 오른쪽 위에서 왼쪽 아래)
+    // 패턴: 흰색 직사각형 - 빨간 점 - 대각선 대시 - 빨간 점
     for (let bx = 0; bx < 3; bx++) {
         for (let by = 0; by < 2; by++) {
             const gapY = (by + 1) * BLOCK_SIZE - 1; // 블록 사이 경계
             const centerX = bx * BLOCK_SIZE + Math.floor(BLOCK_SIZE / 2);
             
-            // 흰색 세로 직사각형 (블록 경계 바로 아래)
+            // 흰색 직사각형 (블록 경계 바로 아래, 대각선 시작점)
             if (gapY + 1 < GRID_SIZE && centerX >= 0 && centerX < GRID_SIZE) {
                 grid[gapY + 1][centerX].whiteRect = true;
             }
             
             // 첫 번째 빨간 점
-            if (gapY + 2 < GRID_SIZE && centerX >= 0 && centerX < GRID_SIZE) {
-                grid[gapY + 2][centerX].dot = true;
+            if (gapY + 2 < GRID_SIZE && centerX - 1 >= 0 && centerX - 1 < GRID_SIZE) {
+                grid[gapY + 2][centerX - 1].dot = true;
             }
             
-            // 흰색 세로 대시
-            if (gapY + 3 < GRID_SIZE && centerX >= 0 && centerX < GRID_SIZE) {
-                grid[gapY + 3][centerX].vertical = true;
+            // 대각선 대시 (오른쪽 위 → 왼쪽 아래)
+            if (gapY + 3 < GRID_SIZE && centerX - 2 >= 0 && centerX - 2 < GRID_SIZE) {
+                grid[gapY + 3][centerX - 2].vertical = true;
             }
             
             // 두 번째 빨간 점
-            if (gapY + 4 < GRID_SIZE && centerX >= 0 && centerX < GRID_SIZE) {
-                grid[gapY + 4][centerX].dot = true;
+            if (gapY + 4 < GRID_SIZE && centerX - 3 >= 0 && centerX - 3 < GRID_SIZE) {
+                grid[gapY + 4][centerX - 3].dot = true;
             }
         }
     }
