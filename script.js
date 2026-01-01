@@ -699,14 +699,14 @@ document.getElementById('erase-mode').addEventListener('click', () => {
     
     if (isEraseMode) {
         eraseBtn.classList.add('active');
-        eraseBtn.textContent = '지우기 (활성)';
+        eraseBtn.textContent = 'Clear (Activated)';
         // 도구 버튼 비활성화 표시
         document.querySelectorAll('.tool-btn').forEach(btn => {
             btn.style.opacity = '0.5';
         });
     } else {
         eraseBtn.classList.remove('active');
-        eraseBtn.textContent = '지우기';
+        eraseBtn.textContent = 'Clear Selection';
         // 도구 버튼 활성화 표시
         document.querySelectorAll('.tool-btn').forEach(btn => {
             btn.style.opacity = '1';
@@ -1571,7 +1571,7 @@ animate();
 const toolSelector = document.createElement('div');
 toolSelector.className = 'tool-selector';
 toolSelector.innerHTML = `
-    <h2>도구 선택</h2>
+    <h2>패턴 선택</h2>
     <div class="tools">
         <div class="tool-group">
             <div class="tool-group-label">1. Horizontal □</div>

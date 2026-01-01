@@ -340,6 +340,10 @@ body {
     margin-bottom: 0;
 }
 
+#erase-mode {
+    margin-top: 0;
+}
+
 .grid-controls button {
     padding: 12px 20px;
     background: #ffffff;
