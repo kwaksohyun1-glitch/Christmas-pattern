@@ -17,9 +17,12 @@ const grid = Array(GRID_SIZE).fill(null).map(() =>
         greenRectMaxGrid: 4, // 녹색 직사각형의 확장 그리드 (기본값: 4칸)
         horizontal: false,
         horizontalFixed: false, // 가로 대시 고정 여부
+        horizontal1xFull: false, // 가로 대시 1x 모드
         vertical: false,
         verticalFixed: false, // 세로 대시 고정 여부
-        dot: false
+        vertical1xFull: false, // 세로 대시 1x 모드
+        dot: false,
+        dotSize: 1 // dot 크기 (1: 1x, 4: 4x, 8: 8x)
     }))
 );
 
@@ -32,14 +35,17 @@ const layerVisibility = {
     dot: true
 };
 
-// 레이어별 색상
+// 레이어별 색상 (현재 HTML에 설정된 값으로 기본 설정)
 const layerColors = {
     whiteRect: '#ffffff',
-    greenRect: '#00ff00',
-    horizontal: '#00ff00', // 녹색 플러스
-    vertical: '#00ff00',   // 녹색 플러스
-    dot: '#ff0000'
+    greenRect: '#00ff85',
+    horizontal: '#ffffff', // HTML에서 설정된 값
+    vertical: '#00ff85',   // Slash (/)
+    dot: '#ff3c32'
 };
+
+// 배경 컬러
+let backgroundColor = '#000000';
 
 // 레이어별 최대 확장 그리드 (기본값: 4칸)
 const layerMaxGrid = {
@@ -270,9 +276,12 @@ function toggleCell(x, y) {
         greenRectMaxGrid: cell.greenRectMaxGrid,
         horizontal: cell.horizontal,
         horizontalFixed: cell.horizontalFixed,
+        horizontal1xFull: cell.horizontal1xFull,
         vertical: cell.vertical,
         verticalFixed: cell.verticalFixed,
-        dot: cell.dot
+        vertical1xFull: cell.vertical1xFull,
+        dot: cell.dot,
+        dotSize: cell.dotSize
     };
     
     // 지우기 모드일 때는 해당 셀의 모든 요소를 지움
@@ -281,9 +290,12 @@ function toggleCell(x, y) {
         cell.greenRect = false;
         cell.horizontal = false;
         cell.horizontalFixed = false;
+        cell.horizontal1xFull = false;
         cell.vertical = false;
         cell.verticalFixed = false;
+        cell.vertical1xFull = false;
         cell.dot = false;
+        cell.dotSize = 1;
     } else {
         // 현재 도구에 해당하는 레이어 토글
     if (currentTool === 'whiteRect4' || currentTool === 'whiteRect2' || currentTool === 'whiteRect1') {
@@ -301,17 +313,36 @@ function toggleCell(x, y) {
     } else if (currentTool === 'horizontal1x') {
         cell.horizontal = !cell.horizontal;
         cell.horizontalFixed = false;
+        cell.horizontal1xFull = false;
+    } else if (currentTool === 'horizontal1xFull') {
+        cell.horizontal = !cell.horizontal;
+        cell.horizontalFixed = false;
+        cell.horizontal1xFull = true; // 1x 모드 표시
     } else if (currentTool === 'horizontalFixed') {
         cell.horizontal = !cell.horizontal;
         cell.horizontalFixed = true;
+        cell.horizontal1xFull = false;
     } else if (currentTool === 'vertical1x') {
         cell.vertical = !cell.vertical;
         cell.verticalFixed = false;
+        cell.vertical1xFull = false;
+    } else if (currentTool === 'vertical1xFull') {
+        cell.vertical = !cell.vertical;
+        cell.verticalFixed = false;
+        cell.vertical1xFull = true; // 1x 모드 표시
     } else if (currentTool === 'verticalFixed') {
         cell.vertical = !cell.vertical;
         cell.verticalFixed = true;
-    } else if (currentTool === 'dot') {
+        cell.vertical1xFull = false;
+    } else if (currentTool === 'dot1x' || currentTool === 'dot4x' || currentTool === 'dot8x') {
         cell.dot = !cell.dot;
+        if (currentTool === 'dot1x') {
+            cell.dotSize = 1;
+        } else if (currentTool === 'dot4x') {
+            cell.dotSize = 4;
+        } else if (currentTool === 'dot8x') {
+            cell.dotSize = 8;
+        }
     }
     }
     
@@ -461,7 +492,7 @@ function getAnimationValue(x, y, layer = null) {
 
 // 그리기 함수
 function draw() {
-    ctx.fillStyle = '#000000';
+    ctx.fillStyle = backgroundColor;
     ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
     
     // 그리드 라인 (녹화 중일 때는 숨김)
@@ -612,6 +643,11 @@ function draw() {
                 if (cell.horizontalFixed) {
                     // Fixed: 고정 길이 (0.25칸, 모션 없음) - 절반 길이
                     dashLength = CELL_SIZE * 0.25;
+                } else if (cell.horizontal1xFull) {
+                    // 1x: 애니메이션으로 길이 변화 (1px에서 1칸까지)
+                    const animValue = getAnimationValue(x, y, 'horizontal');
+                    const maxLength1x = CELL_SIZE * 1.0;
+                    dashLength = baseLength + (maxLength1x - baseLength) * animValue;
                 } else {
                     // 0.5x: 애니메이션으로 길이 변화 (1px에서 0.5칸까지)
                     const animValue = getAnimationValue(x, y, 'horizontal');
@@ -640,6 +676,11 @@ function draw() {
                 if (cell.verticalFixed) {
                     // Fixed: 고정 길이 (0.25칸, 모션 없음) - 절반 길이
                     dashLength = CELL_SIZE * 0.25;
+                } else if (cell.vertical1xFull) {
+                    // 1x: 애니메이션으로 길이 변화 (1px에서 1칸까지)
+                    const animValue = getAnimationValue(x, y, 'vertical');
+                    const maxLength1x = CELL_SIZE * 1.0;
+                    dashLength = baseLength + (maxLength1x - baseLength) * animValue;
                 } else {
                     // 0.5x: 애니메이션으로 길이 변화 (1px에서 0.5칸까지)
                     const animValue = getAnimationValue(x, y, 'vertical');
@@ -660,16 +701,35 @@ function draw() {
             // 점 (dot) - 깜박임 효과
             if (layerVisibility.dot && cell.dot) {
                 const animValue = getAnimationValue(x, y, 'dot');
-                // 깜박임: opacity를 0~1 사이로 변화
-                const opacity = animValue;
                 const color = layerColors.dot;
                 const r = parseInt(color.slice(1, 3), 16);
                 const g = parseInt(color.slice(3, 5), 16);
                 const b = parseInt(color.slice(5, 7), 16);
-                ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${opacity})`;
-                ctx.beginPath();
-                ctx.arc(cellX + CELL_SIZE / 2, cellY + CELL_SIZE / 2, 3, 0, Math.PI * 2);
-                ctx.fill();
+                
+                const dotSize = cell.dotSize || 1;
+                const centerX = cellX + CELL_SIZE / 2;
+                const centerY = cellY + CELL_SIZE / 2;
+                
+                if (dotSize === 1) {
+                    // 1x: 솔리드 스타일, 깜박임 효과 (opacity 변화)
+                    const opacity = animValue;
+                    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${opacity})`;
+                    ctx.beginPath();
+                    const radius = 3; // 1x는 고정 크기 3px
+                    ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+                    ctx.fill(); // 솔리드 스타일
+                } else {
+                    // 4x, 8x: 0.5x 크기부터 시작해서 커지는 모션 (라인 스타일)
+                    const baseRadius = 1.5; // 0.5x 크기 (3px * 0.5 = 1.5px)
+                    const maxRadius = 3 * dotSize; // 최대 크기
+                    const radius = baseRadius + (maxRadius - baseRadius) * animValue; // 애니메이션으로 크기 변화
+                    const opacity = 1; // 크기 변화 시 opacity는 1로 고정
+                    ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${opacity})`;
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+                    ctx.stroke(); // 라인 스타일
+                }
             }
         }
     }
@@ -726,9 +786,12 @@ document.getElementById('clear-all').addEventListener('click', () => {
                     greenRectMaxGrid: 4,
                     horizontal: false,
                     horizontalFixed: false,
+                    horizontal1xFull: false,
                     vertical: false,
                     verticalFixed: false,
-                    dot: false
+                    vertical1xFull: false,
+                    dot: false,
+                    dotSize: 0.5
                 };
             }
         }
@@ -752,9 +815,12 @@ document.getElementById('save-pattern').addEventListener('click', () => {
                 greenRectMaxGrid: cell.greenRectMaxGrid,
                 horizontal: cell.horizontal,
                 horizontalFixed: cell.horizontalFixed,
+                horizontal1xFull: cell.horizontal1xFull,
                 vertical: cell.vertical,
                 verticalFixed: cell.verticalFixed,
-                dot: cell.dot
+                vertical1xFull: cell.vertical1xFull,
+                dot: cell.dot,
+                dotSize: cell.dotSize
             }))
         ),
         layerColors: layerColors,
@@ -805,9 +871,12 @@ document.getElementById('load-pattern').addEventListener('change', (e) => {
                         cell.greenRectMaxGrid = savedCell.greenRectMaxGrid || 4;
                         cell.horizontal = savedCell.horizontal || false;
                         cell.horizontalFixed = savedCell.horizontalFixed || false;
+                        cell.horizontal1xFull = savedCell.horizontal1xFull || false;
                         cell.vertical = savedCell.vertical || false;
                         cell.verticalFixed = savedCell.verticalFixed || false;
+                        cell.vertical1xFull = savedCell.vertical1xFull || false;
                         cell.dot = savedCell.dot || false;
+                        cell.dotSize = savedCell.dotSize || 0.5;
                     }
                 }
             }
@@ -1232,8 +1301,13 @@ function clearAllPatterns() {
                 greenRect: false,
                 greenRectMaxGrid: 4,
                 horizontal: false,
+                horizontalFixed: false,
+                horizontal1xFull: false,
                 vertical: false,
-                dot: false
+                verticalFixed: false,
+                vertical1xFull: false,
+                dot: false,
+                dotSize: 0.5
             };
         }
     }
@@ -1574,7 +1648,7 @@ toolSelector.innerHTML = `
     <h2>패턴 선택</h2>
     <div class="tools">
         <div class="tool-group">
-            <div class="tool-group-label">1. Horizontal □</div>
+            <div class="tool-group-label">1. Left to Right □</div>
             <div class="tool-group-buttons">
                 <button class="tool-btn active" data-tool="whiteRect4">4x</button>
                 <button class="tool-btn" data-tool="whiteRect2">2x</button>
@@ -1582,7 +1656,7 @@ toolSelector.innerHTML = `
             </div>
         </div>
         <div class="tool-group">
-            <div class="tool-group-label">2. Vertical □</div>
+            <div class="tool-group-label">2. Right to Left □</div>
             <div class="tool-group-buttons">
                 <button class="tool-btn" data-tool="greenRect4">4x</button>
                 <button class="tool-btn" data-tool="greenRect2">2x</button>
@@ -1590,23 +1664,27 @@ toolSelector.innerHTML = `
             </div>
         </div>
         <div class="tool-group">
-            <div class="tool-group-label">3. Horizontal dash (—)</div>
+            <div class="tool-group-label">3. Backslash (\\)</div>
             <div class="tool-group-buttons">
                 <button class="tool-btn" data-tool="horizontal1x">0.5x</button>
+                <button class="tool-btn" data-tool="horizontal1xFull">1x</button>
                 <button class="tool-btn" data-tool="horizontalFixed">fixed</button>
             </div>
         </div>
         <div class="tool-group">
-            <div class="tool-group-label">4. Vertical dash (|)</div>
+            <div class="tool-group-label">4. Slash (/)</div>
             <div class="tool-group-buttons">
                 <button class="tool-btn" data-tool="vertical1x">0.5x</button>
+                <button class="tool-btn" data-tool="vertical1xFull">1x</button>
                 <button class="tool-btn" data-tool="verticalFixed">fixed</button>
             </div>
         </div>
         <div class="tool-group">
             <div class="tool-group-label">5. Dot (.)</div>
             <div class="tool-group-buttons">
-                <button class="tool-btn" data-tool="dot">Dot(.)</button>
+                <button class="tool-btn" data-tool="dot1x">1x</button>
+                <button class="tool-btn" data-tool="dot4x">4x</button>
+                <button class="tool-btn" data-tool="dot8x">8x</button>
             </div>
         </div>
     </div>
@@ -1614,6 +1692,25 @@ toolSelector.innerHTML = `
 `;
 
 document.querySelector('.controls-right').appendChild(toolSelector);
+
+// 배경 컬러 피커 추가 (controls-right 맨 아래)
+const backgroundColorControl = document.createElement('div');
+backgroundColorControl.style.marginTop = '30px';
+backgroundColorControl.style.paddingTop = '20px';
+backgroundColorControl.style.borderTop = '1px solid #3a3a3a';
+backgroundColorControl.innerHTML = `
+    <label style="display: flex; align-items: center; gap: 10px; color: #cccccc; font-size: 14px;">
+        <span>Background Color:</span>
+        <input type="color" id="background-color" value="#000000" class="color-picker">
+    </label>
+`;
+document.querySelector('.controls-right').appendChild(backgroundColorControl);
+
+// 배경 컬러 변경 이벤트
+document.getElementById('background-color').addEventListener('input', (e) => {
+    backgroundColor = e.target.value;
+    draw();
+});
 
 // 그리드 타입 선택 버튼 이벤트
 document.querySelectorAll('.grid-type-btn').forEach(btn => {
