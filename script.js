@@ -1603,7 +1603,12 @@ toolSelector.innerHTML = `
                 <button class="tool-btn" data-tool="verticalFixed">fixed</button>
             </div>
         </div>
-        <button class="tool-btn" data-tool="dot">Dot(.)</button>
+        <div class="tool-group">
+            <div class="tool-group-label">5. Dot (.)</div>
+            <div class="tool-group-buttons">
+                <button class="tool-btn" data-tool="dot">Dot(.)</button>
+            </div>
+        </div>
     </div>
     <p class="tool-hint">키보드로도 선택 가능</p>
 `;
