@@ -491,9 +491,14 @@ function getAnimationValue(x, y, layer = null) {
 }
 
 // 그리기 함수
-function draw() {
-    ctx.fillStyle = backgroundColor;
-    ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+function draw(drawBackground = true) {
+    if (drawBackground) {
+        ctx.fillStyle = backgroundColor;
+        ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+    } else {
+        // 배경을 그리지 않을 때는 투명하게 처리 (이미 투명한 상태)
+        ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+    }
     
     // 그리드 라인 (녹화 중일 때는 숨김)
     if (!isRecording) {
@@ -842,65 +847,246 @@ document.getElementById('load-pattern-btn').addEventListener('click', () => {
     document.getElementById('load-pattern').click();
 });
 
+// 패턴 PNG 추출 (배경 제외)
+document.getElementById('export-pattern-png').addEventListener('click', () => {
+    // 임시 캔버스 생성
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = CANVAS_SIZE;
+    tempCanvas.height = CANVAS_SIZE;
+    const tempCtx = tempCanvas.getContext('2d');
+    
+    // 배경을 투명하게 설정 (배경을 그리지 않음)
+    tempCtx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+    
+    // 그리드 라인은 그리지 않음 (패턴만)
+    
+    // 각 셀 그리기 (기존 draw 함수의 패턴 그리기 로직 재사용)
+    for (let y = 0; y < GRID_SIZE; y++) {
+        for (let x = 0; x < GRID_SIZE; x++) {
+            const cell = grid[y][x];
+            const cellX = x * CELL_SIZE;
+            const cellY = y * CELL_SIZE;
+            
+            // 흰색 직사각형
+            if (layerVisibility.whiteRect && cell.whiteRect) {
+                const animValue = getAnimationValue(x, y, 'whiteRect');
+                tempCtx.strokeStyle = layerColors.whiteRect;
+                tempCtx.lineWidth = 2;
+                
+                const baseHeight = CELL_SIZE * 0.25;
+                const baseWidth = 1;
+                const maxWidth = CELL_SIZE * (cell.whiteRectMaxGrid || 4);
+                
+                const rectWidth = baseWidth + (maxWidth - baseWidth) * animValue;
+                const rectHeight = baseHeight;
+                
+                const centerX = cellX + CELL_SIZE / 2;
+                const centerY = cellY + CELL_SIZE / 2;
+                
+                tempCtx.save();
+                tempCtx.translate(centerX, centerY);
+                tempCtx.rotate(Math.PI / 4);
+                tempCtx.strokeRect(
+                    -rectWidth / 2,
+                    -rectHeight / 2,
+                    rectWidth,
+                    rectHeight
+                );
+                tempCtx.restore();
+            }
+            
+            // 녹색 직사각형
+            if (layerVisibility.greenRect && cell.greenRect) {
+                const animValue = getAnimationValue(x, y, 'greenRect');
+                tempCtx.strokeStyle = layerColors.greenRect;
+                tempCtx.lineWidth = 2;
+                
+                const baseHeight = CELL_SIZE * 0.25;
+                const baseWidth = 1;
+                const maxWidth = CELL_SIZE * (cell.greenRectMaxGrid || 4);
+                
+                const rectWidth = baseWidth + (maxWidth - baseWidth) * animValue;
+                const rectHeight = baseHeight;
+                
+                const centerX = cellX + CELL_SIZE / 2;
+                const centerY = cellY + CELL_SIZE / 2;
+                
+                tempCtx.save();
+                tempCtx.translate(centerX, centerY);
+                tempCtx.rotate(-Math.PI / 4);
+                tempCtx.strokeRect(
+                    -rectWidth / 2,
+                    -rectHeight / 2,
+                    rectWidth,
+                    rectHeight
+                );
+                tempCtx.restore();
+            }
+            
+            // 대각선 대시 (왼쪽 위 → 오른쪽 아래)
+            if (layerVisibility.horizontal && cell.horizontal) {
+                tempCtx.strokeStyle = layerColors.horizontal;
+                tempCtx.lineWidth = 2;
+                const baseLength = 1;
+                const maxLength = CELL_SIZE * 0.7;
+                
+                let dashLength;
+                if (cell.horizontalFixed) {
+                    dashLength = CELL_SIZE * 0.25;
+                } else if (cell.horizontal1xFull) {
+                    const animValue = getAnimationValue(x, y, 'horizontal');
+                    const maxLength1x = CELL_SIZE * 1.0;
+                    dashLength = baseLength + (maxLength1x - baseLength) * animValue;
+                } else {
+                    const animValue = getAnimationValue(x, y, 'horizontal');
+                    dashLength = baseLength + (maxLength - baseLength) * animValue;
+                }
+                
+                const centerX = cellX + CELL_SIZE / 2;
+                const centerY = cellY + CELL_SIZE / 2;
+                const halfLength = dashLength / Math.sqrt(2);
+                tempCtx.beginPath();
+                tempCtx.moveTo(centerX - halfLength, centerY - halfLength);
+                tempCtx.lineTo(centerX + halfLength, centerY + halfLength);
+                tempCtx.stroke();
+            }
+            
+            // 대각선 대시 (오른쪽 위 → 왼쪽 아래)
+            if (layerVisibility.vertical && cell.vertical) {
+                tempCtx.strokeStyle = layerColors.vertical;
+                tempCtx.lineWidth = 2;
+                const baseLength = 1;
+                const maxLength = CELL_SIZE * 0.7;
+                
+                let dashLength;
+                if (cell.verticalFixed) {
+                    dashLength = CELL_SIZE * 0.25;
+                } else if (cell.vertical1xFull) {
+                    const animValue = getAnimationValue(x, y, 'vertical');
+                    const maxLength1x = CELL_SIZE * 1.0;
+                    dashLength = baseLength + (maxLength1x - baseLength) * animValue;
+                } else {
+                    const animValue = getAnimationValue(x, y, 'vertical');
+                    dashLength = baseLength + (maxLength - baseLength) * animValue;
+                }
+                
+                const centerX = cellX + CELL_SIZE / 2;
+                const centerY = cellY + CELL_SIZE / 2;
+                const halfLength = dashLength / Math.sqrt(2);
+                tempCtx.beginPath();
+                tempCtx.moveTo(centerX + halfLength, centerY - halfLength);
+                tempCtx.lineTo(centerX - halfLength, centerY + halfLength);
+                tempCtx.stroke();
+            }
+            
+            // 점 (dot)
+            if (layerVisibility.dot && cell.dot) {
+                const animValue = getAnimationValue(x, y, 'dot');
+                const color = layerColors.dot;
+                const r = parseInt(color.slice(1, 3), 16);
+                const g = parseInt(color.slice(3, 5), 16);
+                const b = parseInt(color.slice(5, 7), 16);
+                
+                const dotSize = cell.dotSize || 1;
+                const centerX = cellX + CELL_SIZE / 2;
+                const centerY = cellY + CELL_SIZE / 2;
+                
+                if (dotSize === 1) {
+                    const opacity = animValue;
+                    tempCtx.fillStyle = `rgba(${r}, ${g}, ${b}, ${opacity})`;
+                    tempCtx.beginPath();
+                    const radius = 3;
+                    tempCtx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+                    tempCtx.fill();
+                } else {
+                    const baseRadius = 1.5;
+                    const maxRadius = 3 * dotSize;
+                    const radius = baseRadius + (maxRadius - baseRadius) * animValue;
+                    const opacity = 1;
+                    tempCtx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${opacity})`;
+                    tempCtx.lineWidth = 2;
+                    tempCtx.beginPath();
+                    tempCtx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+                    tempCtx.stroke();
+                }
+            }
+        }
+    }
+    
+    // PNG로 다운로드
+    tempCanvas.toBlob((blob) => {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.download = `pattern_${new Date().toISOString().slice(0, 10)}.png`;
+        link.href = url;
+        link.click();
+        URL.revokeObjectURL(url);
+    }, 'image/png');
+});
+
 // 패턴 불러오기
+// 패턴 데이터 로드 함수
+function loadPatternData(patternData, showAlert = true) {
+    try {
+        // 버전 확인
+        if (!patternData.grid || !Array.isArray(patternData.grid)) {
+            if (showAlert) alert('잘못된 패턴 파일입니다.');
+            return;
+        }
+        
+        // 그리드 데이터 복원
+        for (let y = 0; y < Math.min(GRID_SIZE, patternData.grid.length); y++) {
+            for (let x = 0; x < Math.min(GRID_SIZE, patternData.grid[y].length); x++) {
+                const savedCell = patternData.grid[y][x];
+                const cell = grid[y][x];
+                
+                if (savedCell) {
+                    cell.whiteRect = savedCell.whiteRect || false;
+                    cell.whiteRectMaxGrid = savedCell.whiteRectMaxGrid || 4;
+                    cell.greenRect = savedCell.greenRect || false;
+                    cell.greenRectMaxGrid = savedCell.greenRectMaxGrid || 4;
+                    cell.horizontal = savedCell.horizontal || false;
+                    cell.horizontalFixed = savedCell.horizontalFixed || false;
+                    cell.horizontal1xFull = savedCell.horizontal1xFull || false;
+                    cell.vertical = savedCell.vertical || false;
+                    cell.verticalFixed = savedCell.verticalFixed || false;
+                    cell.vertical1xFull = savedCell.vertical1xFull || false;
+                    cell.dot = savedCell.dot || false;
+                    cell.dotSize = savedCell.dotSize || 0.5;
+                }
+            }
+        }
+        
+        // 색상 복원 (있는 경우)
+        if (patternData.layerColors) {
+            Object.assign(layerColors, patternData.layerColors);
+            // 색상 피커 업데이트
+            document.getElementById('color-white-rect').value = layerColors.whiteRect;
+            document.getElementById('color-green-rect').value = layerColors.greenRect;
+            document.getElementById('color-horizontal').value = layerColors.horizontal;
+            document.getElementById('color-vertical').value = layerColors.vertical;
+            document.getElementById('color-dot').value = layerColors.dot;
+        }
+        
+        // 히스토리 초기화
+        undoHistory.length = 0;
+        
+        draw();
+        if (showAlert) alert('패턴을 불러왔습니다.');
+    } catch (error) {
+        console.error('패턴 불러오기 오류:', error);
+        if (showAlert) alert('패턴 파일을 불러오는 중 오류가 발생했습니다.');
+    }
+}
+
 document.getElementById('load-pattern').addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (!file) return;
     
     const reader = new FileReader();
     reader.onload = (event) => {
-        try {
-            const patternData = JSON.parse(event.target.result);
-            
-            // 버전 확인
-            if (!patternData.grid || !Array.isArray(patternData.grid)) {
-                alert('잘못된 패턴 파일입니다.');
-                return;
-            }
-            
-            // 그리드 데이터 복원
-            for (let y = 0; y < Math.min(GRID_SIZE, patternData.grid.length); y++) {
-                for (let x = 0; x < Math.min(GRID_SIZE, patternData.grid[y].length); x++) {
-                    const savedCell = patternData.grid[y][x];
-                    const cell = grid[y][x];
-                    
-                    if (savedCell) {
-                        cell.whiteRect = savedCell.whiteRect || false;
-                        cell.whiteRectMaxGrid = savedCell.whiteRectMaxGrid || 4;
-                        cell.greenRect = savedCell.greenRect || false;
-                        cell.greenRectMaxGrid = savedCell.greenRectMaxGrid || 4;
-                        cell.horizontal = savedCell.horizontal || false;
-                        cell.horizontalFixed = savedCell.horizontalFixed || false;
-                        cell.horizontal1xFull = savedCell.horizontal1xFull || false;
-                        cell.vertical = savedCell.vertical || false;
-                        cell.verticalFixed = savedCell.verticalFixed || false;
-                        cell.vertical1xFull = savedCell.vertical1xFull || false;
-                        cell.dot = savedCell.dot || false;
-                        cell.dotSize = savedCell.dotSize || 0.5;
-                    }
-                }
-            }
-            
-            // 색상 복원 (있는 경우)
-            if (patternData.layerColors) {
-                Object.assign(layerColors, patternData.layerColors);
-                // 색상 피커 업데이트
-                document.getElementById('color-white-rect').value = layerColors.whiteRect;
-                document.getElementById('color-green-rect').value = layerColors.greenRect;
-                document.getElementById('color-horizontal').value = layerColors.horizontal;
-                document.getElementById('color-vertical').value = layerColors.vertical;
-                document.getElementById('color-dot').value = layerColors.dot;
-            }
-            
-            // 히스토리 초기화
-            undoHistory.length = 0;
-            
-            draw();
-            alert('패턴을 불러왔습니다.');
-        } catch (error) {
-            console.error('패턴 불러오기 오류:', error);
-            alert('패턴 파일을 불러오는 중 오류가 발생했습니다.');
-        }
+        const patternData = JSON.parse(event.target.result);
+        loadPatternData(patternData, true);
     };
     reader.readAsText(file);
     
@@ -1764,5 +1950,21 @@ document.querySelectorAll('.grid-size-btn').forEach(btn => {
         
         draw();
     });
+});
+
+// 페이지 로드 시 자동으로 패턴 불러오기
+window.addEventListener('DOMContentLoaded', async () => {
+    try {
+        const response = await fetch('pattern_christmas.json');
+        if (response.ok) {
+            const patternData = await response.json();
+            loadPatternData(patternData, false); // 자동 로드는 알림 없이
+        } else {
+            console.log('패턴 파일을 찾을 수 없습니다. 기본 상태로 시작합니다.');
+        }
+    } catch (error) {
+        console.log('패턴 파일 로드 실패:', error);
+        // 에러가 발생해도 기본 상태로 시작
+    }
 });
 
